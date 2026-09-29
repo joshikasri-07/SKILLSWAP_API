@@ -3,64 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>SkillSwap</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="layout">
+<div class="app">
 
     <!-- SIDEBAR -->
     <aside>
-
         <h1>Skill<span>Swap</span></h1>
+        <p>Community Skill Exchange</p>
 
-        <p class="tagline">
-            Community Skill Exchange
-        </p>
-
-        <nav>
-            <button onclick="showPage('dashboard')">Dashboard</button>
-            <button onclick="showPage('skills')">Explore Skills</button>
-            <button onclick="showPage('mySkills')">My Skills</button>
-            <button onclick="showPage('requests')">Requests</button>
-            <button onclick="showPage('wallet')">Wallet</button>
-            <button onclick="showPage('profile')">Profile</button>
-        </nav>
-
+        <button onclick="page('dashboard')">🏠 Dashboard</button>
+        <button onclick="page('skills')">🔎 Explore Skills</button>
+        <button onclick="page('mySkills')">💡 My Skills</button>
+        <button onclick="page('requests')">📋 Requests</button>
+        <button onclick="page('wallet')">⭐ Wallet</button>
+        <button onclick="page('profile')">👤 Profile</button>
     </aside>
 
 
     <!-- MAIN -->
     <main>
 
-        <!-- HEADER -->
+        <!-- TOP BAR -->
         <header>
+            <div class="user">
+                <select id="userSelect" onchange="changeUser()"></select>
 
-            <div>
-                <h2 id="pageTitle">Dashboard</h2>
+                <button onclick="openMember()">+ New Member</button>
 
-                <p>
-                    Learn skills. Share skills. Grow together.
-                </p>
+                ⭐ <b id="topCredits">0</b>
             </div>
-
-            <div class="user-box">
-
-                <select
-                    id="userSelect"
-                    onchange="changeUser()">
-                </select>
-
-                <span>
-                    ⭐ <b id="topCredits">0</b>
-                </span>
-
-            </div>
-
         </header>
 
 
@@ -68,373 +44,229 @@
         <section id="dashboard">
 
             <div class="hero">
+                <h1>Learn. Share. Grow. 🚀</h1>
+                <p>Exchange skills using time credits.</p>
 
-                <h2>Learn. Share. Grow. 🚀</h2>
-
-                <p>
-                    Exchange your skills with the community
-                    using time credits.
-                </p>
-
-                <button onclick="showPage('skills')">
-                    Explore Skills
-                </button>
-
-                <button
-                    class="white-btn"
-                    onclick="openSkillModal()">
-                    Offer a Skill
-                </button>
-
+                <button onclick="page('skills')">Explore Skills</button>
+                <button onclick="openSkill()">Offer a Skill</button>
             </div>
-
-
-            <!-- STATS -->
 
             <div class="stats">
 
-                <div class="stat-card">
+                <div>
                     <small>MY CREDITS</small>
-                    <h3 id="dashboardCredits">0</h3>
-                    <p>Available credits</p>
+                    <b id="sCredits">0</b>
+                    <span>Available credits</span>
                 </div>
 
-                <div class="stat-card">
-                    <small>SKILLS</small>
-                    <h3 id="skillCount">0</h3>
-                    <p>Community skills</p>
+                <div>
+                    <small>MY SKILLS</small>
+                    <b id="sSkills">0</b>
+                    <span>Skills offered</span>
                 </div>
 
-                <div class="stat-card">
+                <div>
                     <small>REQUESTS</small>
-                    <h3 id="requestCount">0</h3>
-                    <p>My requests</p>
+                    <b id="sRequests">0</b>
+                    <span>My requests</span>
                 </div>
 
-                <div class="stat-card">
+                <div>
                     <small>COMPLETED</small>
-                    <h3 id="completedCount">0</h3>
-                    <p>Completed sessions</p>
+                    <b id="sCompleted">0</b>
+                    <span>Completed sessions</span>
                 </div>
 
             </div>
 
-
-            <!-- AVAILABLE SKILLS -->
-
-            <div class="section-box">
-
-                <div class="section-heading">
-
-                    <div>
-                        <h3>Available Skills</h3>
-                        <p>Recently added skills</p>
-                    </div>
-
-                    <button onclick="showPage('skills')">
-                        View All
-                    </button>
-
-                </div>
-
-                <div
-                    id="dashboardSkills"
-                    class="card-grid">
-                </div>
-
+            <div class="box">
+                <h3>Available Skills</h3>
+                <p>Discover skills offered by community members.</p>
+                <div id="dashSkills" class="cards"></div>
             </div>
 
         </section>
 
 
         <!-- EXPLORE SKILLS -->
+        <section id="skills" class="hide">
 
-        <section
-            id="skills"
-            class="page hidden">
-
-            <div class="section-heading">
-
+            <div class="head">
                 <div>
-                    <h2>Explore Skills</h2>
-
-                    <p>
-                        Find skills offered by community members.
-                    </p>
+                    <h3>Find a Skill</h3>
+                    <p>Learn from other community members.</p>
                 </div>
 
-                <button onclick="openSkillModal()">
-                    + Add Skill
-                </button>
-
+                <button onclick="openSkill()">+ Add Skill</button>
             </div>
 
+            <input id="search"
+                   placeholder="🔍 Search for a skill..."
+                   oninput="loadSkills()">
 
-            <input
-                id="search"
-                class="search"
-                type="text"
-                placeholder="🔍 Search for a skill..."
-                oninput="searchSkills()">
-
-
-            <div
-                id="skillsList"
-                class="card-grid">
-            </div>
+            <div id="skillList" class="cards"></div>
 
         </section>
 
 
         <!-- MY SKILLS -->
+        <section id="mySkills" class="hide">
 
-        <section
-            id="mySkills"
-            class="page hidden">
-
-            <div class="section-heading">
-
+            <div class="head">
                 <div>
-                    <h2>My Skills</h2>
-
-                    <p>
-                        Skills you are offering to the community.
-                    </p>
+                    <h3>Your Offered Skills</h3>
+                    <p>Skills you have shared with the community.</p>
                 </div>
 
-                <button onclick="openSkillModal()">
-                    + Add Skill
-                </button>
-
+                <button onclick="openSkill()">+ Add Skill</button>
             </div>
 
-
-            <div
-                id="mySkillsList"
-                class="card-grid">
-            </div>
+            <div id="mySkillList" class="cards"></div>
 
         </section>
 
 
         <!-- REQUESTS -->
+        <section id="requests" class="hide">
 
-        <section
-            id="requests"
-            class="page hidden">
-
-            <div class="section-heading">
-
+            <div class="head">
                 <div>
-                    <h2>Session Requests</h2>
-
-                    <p>
-                        Manage your skill exchange requests.
-                    </p>
+                    <h3>Skill Requests</h3>
+                    <p>Manage your skill exchange requests.</p>
                 </div>
-
             </div>
 
+            <div class="tabs">
+                <button onclick="loadRequests('sent')">
+                    Sent Requests
+                </button>
 
-            <div
-                id="requestsList"
-                class="request-grid">
+                <button onclick="loadRequests('received')">
+                    Received Requests
+                </button>
             </div>
+
+            <div id="requestList" class="cards"></div>
 
         </section>
 
 
         <!-- WALLET -->
+        <section id="wallet" class="hide">
 
-        <section
-            id="wallet"
-            class="page hidden">
-
-            <h2>Credit Wallet</h2>
-
-            <p>
-                Track your time credits and transactions.
-            </p>
-
-
-            <div class="wallet-card">
-
-                <small>AVAILABLE CREDITS</small>
-
-                <h2 id="walletCredits">0</h2>
-
-                <p>
-                    1 credit = 1 hour of skill exchange
-                </p>
-
+            <div class="head">
+                <div>
+                    <h3>Your Wallet</h3>
+                    <p>Track your time credits and transactions.</p>
+                </div>
             </div>
 
+            <div class="wallet">
+                <span>Current Balance</span>
+                <strong>⭐ <b id="walletCredits">0</b> Credits</strong>
 
-            <div class="section-box">
+                <button onclick="addCredits()">+ Add Credits</button>
+            </div>
 
+            <div class="box">
                 <h3>Transaction History</h3>
-
+                <p>Your completed credit transactions.</p>
                 <div id="ledger"></div>
-
             </div>
 
         </section>
 
 
         <!-- PROFILE -->
+        <section id="profile" class="hide">
 
-        <section
-            id="profile"
-            class="page hidden">
-
-            <h2>My Profile</h2>
-
-            <p>
-                Your SkillSwap account details.
-            </p>
-
-
-            <div class="profile-card">
-
-                <div
-                    class="avatar"
-                    id="avatar">
-                    U
+            <div class="head">
+                <div>
+                    <h3>Your Profile</h3>
+                    <p>Your SkillSwap member information.</p>
                 </div>
+            </div>
 
+            <div class="profile">
 
-                <h2 id="profileName">
-                    User
-                </h2>
+                <div id="avatar" class="avatar">U</div>
 
-
-                <p id="profileEmail">
-                    email
-                </p>
-
+                <h2 id="pName">User</h2>
+                <p id="pEmail">email</p>
 
                 <hr>
 
-
-                <div class="profile-info">
-
-                    <p>
-                        <b>Credits</b>
-
-                        <span id="profileCredits">
-                            0
-                        </span>
-                    </p>
-
-
-                    <p>
-                        <b>Member Since</b>
-
-                        <span id="joined">
-                            -
-                        </span>
-                    </p>
-
-                </div>
+                <p>Member ID: <b id="pId">-</b></p>
+                <p>Credits: <b id="pCredits">0</b></p>
+                <p>Joined: <b id="pDate">-</b></p>
 
             </div>
 
         </section>
 
     </main>
-
 </div>
 
 
 <!-- ADD SKILL MODAL -->
+<div id="skillModal" class="modal hide">
+    <div class="modalBox">
 
-<div
-    id="skillModal"
-    class="modal hidden">
+        <h2>Offer a Skill</h2>
+        <p>Share a skill with the community.</p>
 
-    <div class="modal-box">
+        <input id="skillName" placeholder="Skill name">
 
-        <h2>Add a Skill</h2>
+        <textarea id="skillDesc"
+                  placeholder="Describe your skill"></textarea>
 
+        <input id="skillHours"
+               type="number"
+               placeholder="Available hours">
 
-        <input
-            id="skillName"
-            type="text"
-            placeholder="Skill name">
-
-
-        <textarea
-            id="skillDescription"
-            placeholder="Skill description">
-        </textarea>
-
-
-        <input
-            id="skillHours"
-            type="number"
-            min="1"
-            placeholder="Available hours">
-
-
-        <div class="modal-buttons">
-
-            <button onclick="addSkill()">
-                Add Skill
-            </button>
-
-            <button
-                class="cancel"
-                onclick="closeSkillModal()">
-                Cancel
-            </button>
-
-        </div>
+        <button onclick="addSkill()">Add Skill</button>
+        <button class="gray" onclick="closeSkill()">Cancel</button>
 
     </div>
-
 </div>
 
 
 <!-- REQUEST MODAL -->
-
-<div
-    id="requestModal"
-    class="modal hidden">
-
-    <div class="modal-box">
+<div id="requestModal" class="modal hide">
+    <div class="modalBox">
 
         <h2>Request Skill</h2>
+        <p id="selectedSkill"></p>
 
-        <h3 id="requestSkill"></h3>
+        <input id="requestHours"
+               type="number"
+               min="1"
+               value="1">
 
-        <p>
-            How many hours do you need?
-        </p>
-
-
-        <input
-            id="requestHours"
-            type="number"
-            min="1"
-            value="1">
-
-
-        <div class="modal-buttons">
-
-            <button onclick="sendRequest()">
-                Send Request
-            </button>
-
-            <button
-                class="cancel"
-                onclick="closeRequestModal()">
-                Cancel
-            </button>
-
-        </div>
+        <button onclick="sendRequest()">Send Request</button>
+        <button class="gray" onclick="closeRequest()">Cancel</button>
 
     </div>
+</div>
 
+
+<!-- MEMBER MODAL -->
+<div id="memberModal" class="modal hide">
+    <div class="modalBox">
+
+        <h2>Create Member</h2>
+        <p>Add a new SkillSwap member.</p>
+
+        <input id="memberName" placeholder="Name">
+
+        <input id="memberEmail"
+               type="email"
+               placeholder="Email">
+
+        <button onclick="addMember()">Create Member</button>
+        <button class="gray" onclick="closeMember()">Cancel</button>
+
+    </div>
 </div>
 
 

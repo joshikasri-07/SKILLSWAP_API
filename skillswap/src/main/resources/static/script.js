@@ -1,288 +1,124 @@
-let userId = null;
-
-let skills = [];
-
+let userId = 0;
 let selectedSkill = 0;
 
 
-/* GET */
+/* GET DATA */
 
 async function get(url) {
 
-    let response = await fetch(url);
+    let r = await fetch(url);
 
-    if (!response.ok) {
+    if (!r.ok)
         throw new Error("Request failed");
-    }
 
-    return response.json();
+    return r.json();
 }
 
 
-/* LOAD MEMBERS */
+/* MEMBERS */
 
 async function loadUsers() {
 
-    let members = await get(
-        "/api/members"
-    );
+    let users = await get("/api/members");
 
-    let select =
-        document.getElementById(
-            "userSelect"
-        );
+    let select = document.getElementById("userSelect");
 
     select.innerHTML = "";
 
-
-    members.forEach(member => {
-
-        select.innerHTML += `
-            <option value="${member.id}">
-                ${member.name}
-            </option>
-        `;
+    users.forEach(u => {
+        select.innerHTML +=
+            `<option value="${u.id}">${u.name}</option>`;
     });
 
-
-    if (members.length > 0) {
-
-        userId = members[0].id;
-
+    if (users.length) {
+        userId = users[0].id;
+        loadDashboard();
     }
-
-
-    dashboard();
 }
 
 
-/* CHANGE USER */
-
 function changeUser() {
 
-    userId = Number(
-        document.getElementById(
-            "userSelect"
-        ).value
-    );
+    userId =
+        Number(document.getElementById("userSelect").value);
 
-
-    dashboard();
+    loadDashboard();
 }
 
 
 /* PAGE NAVIGATION */
 
-function showPage(page) {
+function page(name) {
 
-    document
-        .querySelectorAll("main section")
-        .forEach(section => {
+    document.querySelectorAll("main section")
+        .forEach(s => s.classList.add("hide"));
 
-            section.classList.add(
-                "hidden"
-            );
+    document.getElementById(name)
+        .classList.remove("hide");
 
-        });
+    if (name == "dashboard")
+        loadDashboard();
 
-
-    document
-        .getElementById(page)
-        .classList.remove("hidden");
-
-
-    let titles = {
-
-        dashboard: "Dashboard",
-
-        skills: "Explore Skills",
-
-        mySkills: "My Skills",
-
-        requests: "Requests",
-
-        wallet: "Credit Wallet",
-
-        profile: "Profile"
-
-    };
-
-
-    document
-        .getElementById("pageTitle")
-        .innerText = titles[page];
-
-
-    if (page === "dashboard") {
-        dashboard();
-    }
-
-    if (page === "skills") {
+    if (name == "skills")
         loadSkills();
-    }
 
-    if (page === "mySkills") {
+    if (name == "mySkills")
         loadMySkills();
-    }
 
-    if (page === "requests") {
-        loadRequests();
-    }
+    if (name == "requests")
+        loadRequests("sent");
 
-    if (page === "wallet") {
+    if (name == "wallet")
         loadWallet();
-    }
 
-    if (page === "profile") {
+    if (name == "profile")
         loadProfile();
-    }
 }
 
 
 /* DASHBOARD */
 
-async function dashboard() {
+async function loadDashboard() {
 
-    let user = await get(
-        `/api/members/${userId}`
-    );
+    let user =
+        await get(`/api/members/${userId}`);
 
+    let skills =
+        await get("/api/skills");
 
-    skills = await get(
-        "/api/skills"
-    );
+    let requests =
+        await get("/api/requests");
 
+    document.getElementById("topCredits")
+        .innerText = user.creditBalance;
 
-    let requests = await get(
-        "/api/requests"
-    );
+    document.getElementById("sCredits")
+        .innerText = user.creditBalance;
 
-
-    document
-        .getElementById("topCredits")
-        .innerText =
-        user.creditBalance;
-
-
-    document
-        .getElementById("dashboardCredits")
-        .innerText =
-        user.creditBalance;
-
-
-    document
-        .getElementById("skillCount")
-        .innerText =
-        skills.length;
-
+    let mySkills =
+        skills.filter(s => s.provider.id == userId);
 
     let myRequests =
-        requests.filter(
-            request =>
-                request.requester.id == userId
+        requests.filter(r =>
+            r.requester.id == userId ||
+            r.skillOffer.provider.id == userId
         );
 
-
-    document
-        .getElementById("requestCount")
-        .innerText =
-        myRequests.length;
-
-
-    document
-        .getElementById("completedCount")
-        .innerText =
-        myRequests.filter(
-            request =>
-                request.status === "COMPLETED"
-        ).length;
-
-
-    displaySkills(
-        skills.slice(0, 3),
-        "dashboardSkills"
-    );
-}
-
-
-/* DISPLAY SKILLS */
-
-function displaySkills(
-    data,
-    elementId
-) {
-
-    let box =
-        document.getElementById(
-            elementId
+    let completed =
+        myRequests.filter(r =>
+            r.status == "COMPLETED"
         );
 
+    document.getElementById("sSkills")
+        .innerText = mySkills.length;
 
-    box.innerHTML = "";
+    document.getElementById("sRequests")
+        .innerText = myRequests.length;
 
+    document.getElementById("sCompleted")
+        .innerText = completed.length;
 
-    if (data.length === 0) {
-
-        box.innerHTML =
-            "<p>No skills available.</p>";
-
-        return;
-    }
-
-
-    data.forEach(skill => {
-
-        let button = "";
-
-
-        if (
-            skill.provider.id != userId
-        ) {
-
-            button = `
-
-                <button
-                    onclick="
-                    openRequestModal(
-                        ${skill.id},
-                        '${skill.skillName}'
-                    )">
-
-                    Request
-
-                </button>
-
-            `;
-        }
-
-
-        box.innerHTML += `
-
-            <div class="skill-card">
-
-                <h3>
-                    ${skill.skillName}
-                </h3>
-
-                <p>
-                    ${skill.description}
-                </p>
-
-                <p>
-                    👤 ${skill.provider.name}
-                </p>
-
-                <p>
-                    ⏱ ${skill.availableHours}
-                    hours
-                </p>
-
-                ${button}
-
-            </div>
-
-        `;
-    });
+    showSkills(skills, "dashSkills", 4);
 }
 
 
@@ -290,42 +126,72 @@ function displaySkills(
 
 async function loadSkills() {
 
-    skills = await get(
-        "/api/skills"
+    let skills =
+        await get("/api/skills");
+
+    let search =
+        document.getElementById("search").value
+        .toLowerCase();
+
+    skills = skills.filter(s =>
+        s.skillName.toLowerCase()
+        .includes(search)
     );
 
-
-    displaySkills(
-        skills,
-        "skillsList"
-    );
+    showSkills(skills, "skillList");
 }
 
 
-/* SEARCH */
+/* DISPLAY SKILLS */
 
-function searchSkills() {
+function showSkills(data, element, limit) {
 
-    let text =
-        document
-            .getElementById("search")
-            .value
-            .toLowerCase();
+    if (limit)
+        data = data.slice(0, limit);
 
+    let box =
+        document.getElementById(element);
 
-    let result =
-        skills.filter(
-            skill =>
-                skill.skillName
-                    .toLowerCase()
-                    .includes(text)
-        );
+    box.innerHTML = "";
 
+    if (!data.length) {
+        box.innerHTML =
+            "<p>No skills available.</p>";
+        return;
+    }
 
-    displaySkills(
-        result,
-        "skillsList"
-    );
+    data.forEach(s => {
+
+        let button = "";
+
+        if (s.provider.id != userId) {
+
+            button = `
+                <button onclick="openRequest(
+                    ${s.id},
+                    '${s.skillName.replace(/'/g, "\\'")}'
+                )">
+                    Request Skill
+                </button>`;
+        }
+
+        box.innerHTML += `
+            <div class="card">
+
+                <h3>${s.skillName}</h3>
+
+                <p>${s.description}</p>
+
+                <p>👤 ${s.provider.name}</p>
+
+                <p>⏱ ${s.availableHours}
+                   available hours</p>
+
+                ${button}
+
+            </div>
+        `;
+    });
 }
 
 
@@ -333,285 +199,224 @@ function searchSkills() {
 
 async function loadMySkills() {
 
-    let data =
+    let skills =
         await get("/api/skills");
 
-
     let mine =
-        data.filter(
-            skill =>
-                skill.provider.id == userId
+        skills.filter(s =>
+            s.provider.id == userId
         );
 
+    let box =
+        document.getElementById("mySkillList");
 
-    displaySkills(
-        mine,
-        "mySkillsList"
-    );
-}
+    box.innerHTML = "";
 
+    if (!mine.length) {
 
-/* ADD SKILL MODAL */
+        box.innerHTML =
+            "<p>You have not offered any skills yet.</p>";
 
-function openSkillModal() {
+        return;
+    }
 
-    document
-        .getElementById("skillModal")
-        .classList.remove("hidden");
-}
+    mine.forEach(s => {
 
+        box.innerHTML += `
+            <div class="card">
 
-function closeSkillModal() {
+                <h3>${s.skillName}</h3>
 
-    document
-        .getElementById("skillModal")
-        .classList.add("hidden");
+                <p>${s.description}</p>
+
+                <p>⏱ ${s.availableHours}
+                   available hours</p>
+
+                <button onclick="deleteSkill(${s.id})">
+                    Delete
+                </button>
+
+            </div>
+        `;
+    });
 }
 
 
 /* ADD SKILL */
 
+function openSkill() {
+
+    document.getElementById("skillModal")
+        .classList.remove("hide");
+}
+
+
+function closeSkill() {
+
+    document.getElementById("skillModal")
+        .classList.add("hide");
+}
+
+
 async function addSkill() {
 
     let name =
-        document
-            .getElementById("skillName")
-            .value;
+        document.getElementById("skillName").value;
 
-
-    let description =
-        document
-            .getElementById(
-                "skillDescription"
-            )
-            .value;
-
+    let desc =
+        document.getElementById("skillDesc").value;
 
     let hours =
-        Number(
-            document
-                .getElementById(
-                    "skillHours"
-                )
-                .value
-        );
+        Number(document.getElementById("skillHours").value);
 
+    if (!name || !desc || hours <= 0) {
 
-    if (
-        !name ||
-        !description ||
-        hours <= 0
-    ) {
-
-        alert(
-            "Please enter all skill details."
-        );
+        alert("Please enter all skill details.");
 
         return;
     }
 
+    let r = await fetch(
+        `/api/skills/member/${userId}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                skillName: name,
+                description: desc,
+                availableHours: hours
+            })
+        }
+    );
 
-    let skill = {
+    if (r.ok) {
 
-        skillName: name,
+        alert("Skill added successfully.");
 
-        description: description,
+        closeSkill();
 
-        availableHours: hours
+        document.getElementById("skillName").value = "";
+        document.getElementById("skillDesc").value = "";
+        document.getElementById("skillHours").value = "";
 
-    };
-
-
-    let response =
-        await fetch(
-            `/api/skills/member/${userId}`,
-            {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body:
-                    JSON.stringify(skill)
-
-            }
-        );
-
-
-    if (response.ok) {
-
-        alert(
-            "Skill added successfully!"
-        );
-
-
-        document
-            .getElementById(
-                "skillName"
-            )
-            .value = "";
-
-
-        document
-            .getElementById(
-                "skillDescription"
-            )
-            .value = "";
-
-
-        document
-            .getElementById(
-                "skillHours"
-            )
-            .value = "";
-
-
-        closeSkillModal();
-
-        dashboard();
+        loadDashboard();
 
     } else {
 
-        alert(
-            "Could not add skill."
-        );
+        alert("Could not add skill.");
     }
 }
 
 
-/* REQUEST MODAL */
+/* DELETE SKILL */
 
-function openRequestModal(
-    id,
-    name
-) {
+async function deleteSkill(id) {
+
+    if (!confirm("Delete this skill?"))
+        return;
+
+    let r = await fetch(
+        `/api/skills/${id}`,
+        { method: "DELETE" }
+    );
+
+    if (r.ok) {
+
+        alert("Skill deleted.");
+
+        loadMySkills();
+        loadDashboard();
+    }
+}
+
+
+/* REQUEST SKILL */
+
+function openRequest(id, name) {
 
     selectedSkill = id;
 
+    document.getElementById("selectedSkill")
+        .innerText = "Requesting: " + name;
 
-    document
-        .getElementById(
-            "requestSkill"
-        )
-        .innerText = name;
-
-
-    document
-        .getElementById(
-            "requestHours"
-        )
-        .value = 1;
-
-
-    document
-        .getElementById(
-            "requestModal"
-        )
-        .classList.remove(
-            "hidden"
-        );
+    document.getElementById("requestModal")
+        .classList.remove("hide");
 }
 
 
-function closeRequestModal() {
+function closeRequest() {
 
-    document
-        .getElementById(
-            "requestModal"
-        )
-        .classList.add(
-            "hidden"
-        );
+    document.getElementById("requestModal")
+        .classList.add("hide");
 }
 
-
-/* SEND REQUEST */
 
 async function sendRequest() {
 
     let hours =
-        Number(
-            document
-                .getElementById(
-                    "requestHours"
-                )
-                .value
-        );
-
+        Number(document.getElementById("requestHours").value);
 
     if (hours <= 0) {
 
-        alert(
-            "Enter valid hours."
-        );
+        alert("Enter valid hours.");
 
         return;
     }
 
+    let r = await fetch(
+        `/api/requests?requesterId=${userId}` +
+        `&skillOfferId=${selectedSkill}` +
+        `&hours=${hours}`,
+        { method: "POST" }
+    );
 
-    let response =
-        await fetch(
+    if (r.ok) {
 
-            `/api/requests` +
-            `?requesterId=${userId}` +
-            `&skillOfferId=${selectedSkill}` +
-            `&hours=${hours}`,
+        alert("Request sent successfully.");
 
-            {
-                method: "POST"
-            }
+        closeRequest();
 
-        );
-
-
-    if (response.ok) {
-
-        alert(
-            "Request sent successfully!"
-        );
-
-
-        closeRequestModal();
-
-        loadRequests();
+        loadDashboard();
 
     } else {
 
-        let error =
-            await response.json();
+        let e = await r.json();
 
-
-        alert(
-            error.message ||
-            "Request failed."
-        );
+        alert(e.message);
     }
 }
 
 
 /* REQUESTS */
 
-async function loadRequests() {
+async function loadRequests(type) {
 
-    let data =
-        await get(
-            "/api/requests"
+    let requests =
+        await get("/api/requests");
+
+    let data;
+
+    if (type == "sent") {
+
+        data = requests.filter(r =>
+            r.requester.id == userId
         );
 
+    } else {
+
+        data = requests.filter(r =>
+            r.skillOffer.provider.id == userId
+        );
+    }
 
     let box =
-        document.getElementById(
-            "requestsList"
-        );
-
+        document.getElementById("requestList");
 
     box.innerHTML = "";
 
-
-    if (data.length === 0) {
+    if (!data.length) {
 
         box.innerHTML =
             "<p>No requests found.</p>";
@@ -619,164 +424,90 @@ async function loadRequests() {
         return;
     }
 
+    data.forEach(r => {
 
-    data.forEach(request => {
+        let actions = "";
 
-        let buttons = "";
+        if (type == "received" &&
+            r.status == "PENDING") {
 
-
-        if (
-            request.skillOffer.provider.id ==
-            userId
-            &&
-            request.status ===
-            "PENDING"
-        ) {
-
-            buttons += `
-
-                <button
-                    onclick="
-                    updateRequest(
-                        ${request.id},
-                        'confirm'
-                    )">
-
+            actions += `
+                <button onclick="updateRequest(
+                    ${r.id}, 'confirm'
+                )">
                     Confirm
-
-                </button>
-
-            `;
+                </button>`;
         }
 
+        if (type == "received" &&
+            r.status == "CONFIRMED") {
 
-        if (
-            request.skillOffer.provider.id ==
-            userId
-            &&
-            request.status ===
-            "CONFIRMED"
-        ) {
-
-            buttons += `
-
-                <button
-                    onclick="
-                    updateRequest(
-                        ${request.id},
-                        'complete'
-                    )">
-
+            actions += `
+                <button onclick="updateRequest(
+                    ${r.id}, 'complete'
+                )">
                     Complete
-
-                </button>
-
-            `;
+                </button>`;
         }
 
+        if (r.status == "PENDING" ||
+            r.status == "CONFIRMED") {
 
-        if (
-            request.status === "PENDING" ||
-            request.status === "CONFIRMED"
-        ) {
-
-            buttons += `
-
-                <button
-                    onclick="
-                    updateRequest(
-                        ${request.id},
-                        'cancel'
-                    )">
-
+            actions += `
+                <button onclick="updateRequest(
+                    ${r.id}, 'cancel'
+                )">
                     Cancel
-
-                </button>
-
-            `;
+                </button>`;
         }
-
 
         box.innerHTML += `
+            <div class="card">
 
-            <div class="request">
+                <h3>${r.skillOffer.skillName}</h3>
 
-                <h3>
-                    ${request
-                        .skillOffer
-                        .skillName}
-                </h3>
+                <p>Requester:
+                    ${r.requester.name}</p>
 
+                <p>Provider:
+                    ${r.skillOffer.provider.name}</p>
 
-                <p>
-                    Requester:
-                    ${request
-                        .requester
-                        .name}
+                <p>Requested Hours:
+                    ${r.requestedHours}</p>
+
+                <p>Status:
+                    <b>${r.status}</b>
                 </p>
 
-
-                <p>
-                    Hours:
-                    ${request
-                        .requestedHours}
-                </p>
-
-
-                <p>
-                    Status:
-                    <b>
-                        ${request.status}
-                    </b>
-                </p>
-
-
-                ${buttons}
+                ${actions}
 
             </div>
-
         `;
     });
 }
 
 
-/* UPDATE REQUEST */
+/* CONFIRM / COMPLETE / CANCEL */
 
-async function updateRequest(
-    id,
-    action
-) {
+async function updateRequest(id, action) {
 
-    let response =
-        await fetch(
-            `/api/requests/${id}/${action}`,
-            {
-                method: "PUT"
-            }
-        );
+    let r = await fetch(
+        `/api/requests/${id}/${action}`,
+        { method: "PUT" }
+    );
 
+    if (r.ok) {
 
-    if (response.ok) {
+        alert("Request updated successfully.");
 
-        alert(
-            "Request updated successfully!"
-        );
-
-
-        loadRequests();
-
-        dashboard();
+        loadRequests("received");
+        loadDashboard();
 
     } else {
 
-        let error =
-            await response.json();
+        let e = await r.json();
 
-
-        alert(
-            error.message ||
-            "Could not update request."
-        );
+        alert(e.message);
     }
 }
 
@@ -786,35 +517,20 @@ async function updateRequest(
 async function loadWallet() {
 
     let user =
-        await get(
-            `/api/members/${userId}`
-        );
-
+        await get(`/api/members/${userId}`);
 
     let ledger =
-        await get(
-            `/api/ledger/member/${userId}`
-        );
+        await get(`/api/ledger/member/${userId}`);
 
-
-    document
-        .getElementById(
-            "walletCredits"
-        )
-        .innerText =
-        user.creditBalance;
-
+    document.getElementById("walletCredits")
+        .innerText = user.creditBalance;
 
     let box =
-        document.getElementById(
-            "ledger"
-        );
-
+        document.getElementById("ledger");
 
     box.innerHTML = "";
 
-
-    if (ledger.length === 0) {
+    if (!ledger.length) {
 
         box.innerHTML =
             "<p>No transactions yet.</p>";
@@ -822,32 +538,41 @@ async function loadWallet() {
         return;
     }
 
-
-    ledger.forEach(transaction => {
+    ledger.forEach(x => {
 
         box.innerHTML += `
-
-            <div class="ledger-item">
-
-                <b>
-                    ${transaction
-                        .transactionType}
-                </b>
-
-                -
-
-                ${transaction.hours}
-                hour(s)
-
-                &nbsp; | &nbsp;
-
-                Balance:
-                ${transaction.balanceAfter}
-
+            <div class="ledger">
+                <b>${x.transactionType}</b>
+                &nbsp; ${x.hours} hour(s)
+                &nbsp; → Balance ${x.balanceAfter}
             </div>
-
         `;
     });
+}
+
+
+/* ADD CREDITS */
+
+async function addCredits() {
+
+    let amount =
+        prompt("Enter credits to add:");
+
+    if (!amount || Number(amount) <= 0)
+        return;
+
+    let r = await fetch(
+        `/api/members/${userId}/credits?credits=${amount}`,
+        { method: "PUT" }
+    );
+
+    if (r.ok) {
+
+        alert("Credits added successfully.");
+
+        loadWallet();
+        loadDashboard();
+    }
 }
 
 
@@ -855,54 +580,94 @@ async function loadWallet() {
 
 async function loadProfile() {
 
-    let user =
-        await get(
-            `/api/members/${userId}`
-        );
+    let u =
+        await get(`/api/members/${userId}`);
 
+    document.getElementById("pName")
+        .innerText = u.name;
 
-    document
-        .getElementById(
-            "profileName"
-        )
+    document.getElementById("pEmail")
+        .innerText = u.email;
+
+    document.getElementById("pId")
+        .innerText = u.id;
+
+    document.getElementById("pCredits")
+        .innerText = u.creditBalance;
+
+    document.getElementById("avatar")
         .innerText =
-        user.name;
+        u.name.charAt(0).toUpperCase();
 
-
-    document
-        .getElementById(
-            "profileEmail"
-        )
+    document.getElementById("pDate")
         .innerText =
-        user.email;
+        new Date(u.createdAt)
+        .toLocaleDateString();
+}
 
 
-    document
-        .getElementById(
-            "profileCredits"
-        )
-        .innerText =
-        user.creditBalance;
+/* NEW MEMBER */
+
+function openMember() {
+
+    document.getElementById("memberModal")
+        .classList.remove("hide");
+}
 
 
-    document
-        .getElementById(
-            "avatar"
-        )
-        .innerText =
-        user.name
-            .charAt(0)
-            .toUpperCase();
+function closeMember() {
+
+    document.getElementById("memberModal")
+        .classList.add("hide");
+}
 
 
-    document
-        .getElementById(
-            "joined"
-        )
-        .innerText =
-        new Date(
-            user.createdAt
-        ).toLocaleDateString();
+async function addMember() {
+
+    let name =
+        document.getElementById("memberName").value;
+
+    let email =
+        document.getElementById("memberEmail").value;
+
+    if (!name || !email) {
+
+        alert("Enter name and email.");
+
+        return;
+    }
+
+    let r = await fetch(
+        "/api/members",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: name,
+                email: email
+            })
+        }
+    );
+
+    if (r.ok) {
+
+        alert("Member created successfully.");
+
+        closeMember();
+
+        document.getElementById("memberName").value = "";
+        document.getElementById("memberEmail").value = "";
+
+        loadUsers();
+
+    } else {
+
+        let e = await r.json();
+
+        alert(e.message);
+    }
 }
 
 
